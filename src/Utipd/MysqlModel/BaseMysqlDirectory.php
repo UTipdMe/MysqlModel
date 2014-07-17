@@ -249,7 +249,7 @@ class BaseMysqlDirectory
     protected function buildSelectStatement($where_keys, $order_by_keys=null, $limit=null) {
         $where_expresssion = $this->buildWhereExpression($where_keys);
         $table_name = $this->getTableName();
-        $sql = "SELECT * FROM `{$table_name}` WHERE {$where_expresssion}";
+        $sql = "SELECT * FROM `{$table_name}`".(strlen($where_expresssion) ? " WHERE {$where_expresssion}" : '');
         if ($order_by_keys !== null) {
             $order_by_expression = '';
             $first = true;
