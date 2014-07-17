@@ -6,6 +6,7 @@ namespace Utipd\MysqlModel;
 use Exception;
 use PDO;
 use Utipd\MysqlModel\BaseMysqlModel;
+use Utipd\MysqlModel\MysqlLiteral;
 
 /*
 * BaseMysqlDirectory
@@ -98,9 +99,9 @@ class BaseMysqlDirectory
      * @param  BaseMysqlModel|MongoID|string $model_or_id
      * @return BaseMysqlModel|null
      */
-    public function findByID($model_or_id) {
+    public function findByID($model_or_id, $options=null) {
         $id = $this->extractID($model_or_id);
-        return $this->findOne(['id' => $id]);
+        return $this->findOne(['id' => $id], null, $options);
     }
 
     /**
@@ -111,8 +112,8 @@ class BaseMysqlDirectory
      * @return Iterator a collection of BaseMysqlModels
      */
 
-    public function find($vars, $sort=null, $limit=null) {
-        $sql = $this->buildSelectStatement(array_keys($vars), $sort, $limit);
+    public function find($vars, $sort=null, $limit=null, $options=null) {
+        $sql = $this->buildSelectStatement(array_keys($vars), $sort, $limit, $options);
         $sth = $this->mysql_dbh->prepare($sql);
         $result = $sth->execute(array_values($vars));
         while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
@@ -125,8 +126,8 @@ class BaseMysqlDirectory
      * @param  array $query
      * @return BaseMysqlModel or null
      */
-    public function findOne($vars, $order_by_keys=null) {
-        foreach ($this->find($vars, $order_by_keys, 1) as $row) {
+    public function findOne($vars, $order_by_keys=null, $options=null) {
+        foreach ($this->find($vars, $order_by_keys, 1, $options) as $row) {
             return $this->newModel($row);
         }
         return null;
@@ -151,6 +152,16 @@ class BaseMysqlDirectory
     }
 
 
+    /**
+     * reloads the model from the database
+     * @param  BaseMysqlModel|MongoID|string $model_or_id
+     * @return BaseMysqlModel
+     */
+    public function reloadForUpdate($model_or_id) {
+        return $this->findByID($model_or_id, ['forUpdate' => true]);
+    }
+
+
 
     /**
      * updates a model in the database
@@ -167,7 +178,7 @@ class BaseMysqlDirectory
         $sql = $this->buildUpdateStatement($update_vars, ['id']);
 
         $sth = $this->mysql_dbh->prepare($sql);
-        $vars = array_values($update_vars);
+        $vars = $this->removeMysqlLiterals(array_values($update_vars));
         $vars[] = $id;
         $result = $sth->execute($vars);
         return $sth->rowCount();
@@ -231,7 +242,11 @@ class BaseMysqlDirectory
         $set_expresssion = '';
         $first = true;
         foreach($data as $data_key => $data_val) {
-            $set_expresssion .= ($first?'':',')."`$data_key` = ?";
+            $val_expression = '?';
+            if ($data_val instanceof MysqlLiteral) { $val_expression = $data_val->getText(); }
+
+            $set_expresssion .= ($first?'':',')."`$data_key` = {$val_expression}";
+
             $first = false;
         }
 
@@ -246,7 +261,7 @@ class BaseMysqlDirectory
         return "DELETE FROM `{$table_name}` WHERE {$where_expresssion}";
     }
 
-    protected function buildSelectStatement($where_keys, $order_by_keys=null, $limit=null) {
+    protected function buildSelectStatement($where_keys, $order_by_keys=null, $limit=null, $options=null) {
         $where_expresssion = $this->buildWhereExpression($where_keys);
         $table_name = $this->getTableName();
         $sql = "SELECT * FROM `{$table_name}`".(strlen($where_expresssion) ? " WHERE {$where_expresssion}" : '');
@@ -258,8 +273,12 @@ class BaseMysqlDirectory
                 $first = false;
             }
             $sql .= " ORDER BY {$order_by_expression}";
-
         }
+
+        if ($options AND isset($options['forUpdate']) AND $options['forUpdate']) {
+            $sql .= " FOR UPDATE";
+        }
+
         return $sql;
     }
 
@@ -323,6 +342,15 @@ class BaseMysqlDirectory
         }
 
         return $this->table_name;
+    }
+
+    protected function removeMysqlLiterals($array) {
+        $out = [];
+        foreach($array as $array_val) {
+            if ($array_val instanceof MysqlLiteral) { continue; }
+            $out[] = $array_val;
+        }
+        return $out;
     }
 
 
