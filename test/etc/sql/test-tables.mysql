@@ -1,0 +1,10 @@
+CREATE DATABASE IF NOT EXISTS `{{db}}`;
+USE `{{db}}`;
+
+CREATE TABLE IF NOT EXISTS `foo` (
+    `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+    `added1` varchar(127) CHARACTER SET ascii NOT NULL DEFAULT '',
+    `bar` varchar(127) CHARACTER SET ascii NOT NULL DEFAULT '',
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=101 DEFAULT CHARSET=utf8;
+
