@@ -1,7 +1,5 @@
 <?php
 
-use MongoModel\Util\ModelUtil;
-use MongoModel\Util\SerialUtil;
 use Utipd\MysqlModel\BaseMysqlModel;
 use Utipd\MysqlModel\Test\Directory\BarDirectory;
 use Utipd\MysqlModel\Test\Directory\BazDirectory;

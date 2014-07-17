@@ -56,7 +56,9 @@ class BaseMysqlDirectory
         $new_model = $this->create($create_vars);
 
         // save it to the database
-        return $this->save($new_model);
+        $model = $this->save($new_model);
+
+        return $model;
     }
 
     /**
@@ -342,11 +344,6 @@ class BaseMysqlDirectory
     protected function onCreateOrUpdate_pre($vars) {
         return $vars;
     }    
-
-    protected function afterCreate(BaseMysqlModel $model) {
-        // abstract
-    }
-
 
 
 
