@@ -1,0 +1,21 @@
+<?php
+
+namespace Utipd\MysqlModel;
+
+use Exception;
+use Utipd\MysqlModel\BaseMysqlModel;
+
+/*
+* BaseMysqlModel
+*/
+class BaseDocumentMysqlModel extends BaseMysqlModel
+{
+
+
+
+
+    ////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////
+
+}
+

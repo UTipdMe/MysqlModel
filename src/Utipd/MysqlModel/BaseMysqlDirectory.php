@@ -81,7 +81,7 @@ class BaseMysqlDirectory
      * @return BaseMysqlModel a new model
      */
     public function save(BaseMysqlModel $model) {
-        $create_vars = (array)$model;
+        $create_vars = $this->onSave_pre((array)$model);
 
         $sql = $this->buildInsertStatement($create_vars);
         $sth = $this->mysql_dbh->prepare($sql);
@@ -117,7 +117,7 @@ class BaseMysqlDirectory
         $sth = $this->mysql_dbh->prepare($sql);
         $result = $sth->execute(array_values($vars));
         while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
-            yield $this->newModel($row);
+            yield $this->newModelFromDatabase($row);
         }
     }
 
@@ -127,8 +127,8 @@ class BaseMysqlDirectory
      * @return BaseMysqlModel or null
      */
     public function findOne($vars, $order_by_keys=null, $options=null) {
-        foreach ($this->find($vars, $order_by_keys, 1, $options) as $row) {
-            return $this->newModel($row);
+        foreach ($this->find($vars, $order_by_keys, 1, $options) as $model) {
+            return $model;
         }
         return null;
     }
@@ -173,7 +173,7 @@ class BaseMysqlDirectory
     public function update($model_or_id, $update_vars, $mongo_options=[]) {
         $id = $this->extractID($model_or_id);
 
-        $update_vars = $this->onUpdate_pre($update_vars);
+        $update_vars = $this->onUpdate_pre($update_vars, $model_or_id);
 
         $sql = $this->buildUpdateStatement($update_vars, ['id']);
 
@@ -298,6 +298,11 @@ class BaseMysqlDirectory
     ////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////
 
+    protected function newModelFromDatabase($data) {
+        $data = $this->onLoadFromDB_post($data);
+        return $this->newModel($data);
+    }
+
     protected function newModel($data) {
         if (isset($this->model_class)) {
             $class = $this->model_class;
@@ -359,21 +364,29 @@ class BaseMysqlDirectory
     // create / update modifiers
 
     protected function onCreate_pre($create_vars) {
-        // modify all create operations
-        return $this->onCreateOrUpdate_pre($create_vars);
+        // modify all create operations (not for database)
+        return $create_vars;
     }
 
-    protected function onUpdate_pre($update_vars) {
-        // modify all updates
-        return $this->onCreateOrUpdate_pre($update_vars);
+
+    protected function onSave_pre($create_vars) {
+        // modify create vars going to the database
+        return $create_vars;
+    }
+
+    protected function onUpdate_pre($update_vars, $model_or_id) {
+        // modify update vars going to database
+        return $update_vars;
     }
     
 
-    protected function onCreateOrUpdate_pre($vars) {
-        return $vars;
-    }    
 
 
+
+    protected function onLoadFromDB_post($model_vars) {
+        // modify vars coming from the database
+        return $model_vars;
+    }
 
 }
 
