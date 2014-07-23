@@ -12,4 +12,7 @@ use \Exception;
 class FoodocDirectory extends BaseDocumentMysqlDirectory
 {
 
+    protected $column_names = ['withKey'];
+
+
 }

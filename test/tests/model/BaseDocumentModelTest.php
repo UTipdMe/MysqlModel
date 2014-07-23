@@ -15,15 +15,24 @@ class BaseDocumentModelTest extends \PHPUnit_Framework_TestCase
 
 
     public function testDocCreateAndSave() {
-        $directory = new FoodocDirectory(TestDBHelper::getMySQLDB());
+        $dbh = TestDBHelper::getMySQLDB();
+        $directory = new FoodocDirectory($dbh);
         $model = $directory->create([]);
         $model['random_propery'] = 'yes';
+        $model['withKey'] = 'bar1';
         $model = $directory->save($model);
         PHPUnit::assertNotNull($model['id']);
 
 
         $model = $directory->reload($model);
         PHPUnit::assertEquals('yes', $model['random_propery']);
+        PHPUnit::assertEquals('bar1', $model['withKey']);
+
+        // make sure that withKey was inserted into the DB column
+        $sth = $dbh->prepare("SELECT * FROM foodoc WHERE id = ?");
+        $sth->execute([$model['id']]);
+        $raw_row = $sth->fetch();
+        PHPUnit::assertEquals('bar1', $raw_row['withKey']);
     }
 
 
@@ -42,16 +51,25 @@ class BaseDocumentModelTest extends \PHPUnit_Framework_TestCase
 
 
     public function testDocUpdate() {
-        $directory = new FoodocDirectory(TestDBHelper::getMySQLDB());
+        $dbh = TestDBHelper::getMySQLDB();
+        $directory = new FoodocDirectory($dbh);
         $model1 = $directory->createAndSave(['docadded1' => 'barz']);
         PHPUnit::assertTrue($model1 instanceof FoodocModel);
         
-        $result = $directory->update($model1, ['docadded1' => 'updatedbaz']);
+        $result = $directory->update($model1, ['docadded1' => 'updatedbaz', 'withKey' => 'baz1']);
         PHPUnit::assertEquals(1, $result);
         PHPUnit::assertTrue($result === 1);
 
         $model = $directory->findById($model1['id']);
         PHPUnit::assertEquals('updatedbaz', $model['docadded1']);
+        PHPUnit::assertEquals('baz1', $model['withKey']);
+
+        // make sure that withKey was updated into the DB column
+        $sth = $dbh->prepare("SELECT * FROM foodoc WHERE id = ?");
+        $sth->execute([$model['id']]);
+        $raw_row = $sth->fetch();
+        PHPUnit::assertEquals('baz1', $raw_row['withKey']);
+
     }
 
     public function testDocAdvancedUpdate() {
@@ -89,6 +107,7 @@ class BaseDocumentModelTest extends \PHPUnit_Framework_TestCase
 
 
     public function setup() {
+        TestDBSetup::dropDatabase();
         TestDBSetup::updateMySQLDBs();
     }
 

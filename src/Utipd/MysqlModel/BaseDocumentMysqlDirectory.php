@@ -15,7 +15,11 @@ use Utipd\MysqlModel\MysqlLiteral;
 class BaseDocumentMysqlDirectory extends BaseMysqlDirectory
 {
 
-
+    /**
+     * column names defined directly in the database
+     * @var array|null
+     */
+    protected $column_names = null;
 
 
     ////////////////////////////////////////////////////////////////////////
@@ -56,9 +60,19 @@ class BaseDocumentMysqlDirectory extends BaseMysqlDirectory
 
     protected function filterVarsForDatabase($vars) {
         $filtered_create_vars = [];
-        if (isset($vars['id'])) {
-            $filtered_create_vars['id'] = $vars['id'];
-            unset($vars['id']);
+
+        if ($this->column_names) {
+            $column_names = $this->column_names;
+            $column_names[] = 'id';
+        } else {
+            $column_names = ['id'];
+        }
+
+        foreach ($column_names as $column_name) {
+            if (isset($vars[$column_name])) {
+                $filtered_create_vars[$column_name] = $vars[$column_name];
+                unset($vars[$column_name]);
+            }
         }
 
         $filtered_create_vars['document'] = json_encode($vars);
