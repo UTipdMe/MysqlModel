@@ -1,8 +1,8 @@
 {
     "name": "utipd/mysqlmodel",
-    "description": "A library",
+    "description": "A minimalistic manager for storing and retrieving MySQL rows as PHP models. Does not handle schemas. Does allow treating mysql rows like documents.",
     "type": "library",
-    "license": "mit",
+    "license": "MIT",
     "authors": [
         {
             "name": "Devon Weller",
