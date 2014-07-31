@@ -59,7 +59,7 @@ class BaseDocumentMysqlDirectory extends BaseMysqlDirectory
 
 
     protected function filterVarsForDatabase($vars) {
-        $filtered_create_vars = [];
+        $filtered_vars = [];
 
         if ($this->column_names) {
             $column_names = $this->column_names;
@@ -69,15 +69,15 @@ class BaseDocumentMysqlDirectory extends BaseMysqlDirectory
         }
 
         foreach ($column_names as $column_name) {
-            if (isset($vars[$column_name])) {
-                $filtered_create_vars[$column_name] = $vars[$column_name];
+            // array_key_exists will catch NULL variables
+            if (array_key_exists($column_name, $vars)) {
+                $filtered_vars[$column_name] = $vars[$column_name];
                 unset($vars[$column_name]);
             }
         }
 
-        $filtered_create_vars['document'] = json_encode($vars);
-
-        return $filtered_create_vars;
+        $filtered_vars['document'] = json_encode($vars);
+        return $filtered_vars;
     }
 
 
