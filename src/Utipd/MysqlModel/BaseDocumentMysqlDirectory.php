@@ -51,6 +51,7 @@ class BaseDocumentMysqlDirectory extends BaseMysqlDirectory
         // modify vars coming from the database
         $out = [];
         $doc_vars = json_decode($model_vars['document'], true);
+        if (!$doc_vars) { $doc_vars = []; }
         $out = $model_vars;
         unset($out['document']);
         $out = array_merge($out, $doc_vars);
