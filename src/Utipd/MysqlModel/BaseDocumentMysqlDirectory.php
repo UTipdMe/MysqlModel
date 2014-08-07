@@ -40,7 +40,7 @@ class BaseDocumentMysqlDirectory extends BaseMysqlDirectory
 
         // merge the updates with the document
         $existing_model_vars = (array)$model;
-        $update_vars = array_replace_recursive($existing_model_vars, $update_vars);
+        $update_vars = array_replace($existing_model_vars, $update_vars);
         unset($update_vars['id']);
 
         // modify update vars going to database

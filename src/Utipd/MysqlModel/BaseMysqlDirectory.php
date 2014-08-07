@@ -106,14 +106,27 @@ class BaseMysqlDirectory
 
     /**
      * queries the database for models
-     * @param  array $query
+     * @param  array $vars the query to search for
      * @param  array $sort
      * @param  array $limit
      * @return Iterator a collection of BaseMysqlModels
      */
-
     public function find($vars, $sort=null, $limit=null, $options=null) {
         $sql = $this->buildSelectStatement(array_keys($vars), $sort, $limit, $options);
+        $sth = $this->mysql_dbh->prepare($sql);
+        $result = $sth->execute(array_values($vars));
+        while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
+            yield $this->newModelFromDatabase($row);
+        }
+    }
+
+    /**
+     * queries the database for models
+     * @param  string $sql
+     * @param  array $vars the query to search for
+     * @return Iterator a collection of BaseMysqlModels
+     */
+    public function findRaw($sql, $vars) {
         $sth = $this->mysql_dbh->prepare($sql);
         $result = $sth->execute(array_values($vars));
         while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
@@ -185,14 +198,21 @@ class BaseMysqlDirectory
     }
 
     public function delete(BaseMysqlModel $model) {
-        
-        $sql = $this->buildDeleteStatement(['id']);
-        $sth = $this->mysql_dbh->prepare($sql);
+        return $this->deleteWhere(['id' => $model['id']]);
+    }
 
-        $vars = [$model['id']];
+    public function deleteWhere($delete_query_vars) {
+        
+        $sql = $this->buildDeleteStatement(array_keys($delete_query_vars));
+        return $this->deleteRaw($sql, array_values($delete_query_vars));
+    }
+
+    public function deleteRaw($sql, $vars) {
+        $sth = $this->mysql_dbh->prepare($sql);
         $result = $sth->execute($vars);
         return $result;
     }
+
 
     // /**
     //  * deletes all items in this collection
@@ -214,6 +234,14 @@ class BaseMysqlDirectory
         return;
     }
 
+    public function getTableName() {
+        if ($this->table_name === null) {
+            $directory_class = implode('', array_slice(explode('\\', get_class($this)), -1));
+            $this->table_name = strtolower(substr($directory_class, 0, -9))."";
+        }
+
+        return $this->table_name;
+    }
 
     ////////////////////////////////////////////////////////////////////////
 
@@ -273,6 +301,10 @@ class BaseMysqlDirectory
                 $first = false;
             }
             $sql .= " ORDER BY {$order_by_expression}";
+        }
+
+        if ($limit !== null) {
+            $sql .= " LIMIT {$limit}";
         }
 
         if ($options AND isset($options['forUpdate']) AND $options['forUpdate']) {
@@ -338,15 +370,6 @@ class BaseMysqlDirectory
         $id = intval($item_or_id);
         if ($id <= 0) { throw new Exception("Unknown ID: ".json_encode($item_or_id)."", 1); }
         return $id;
-    }
-
-    protected function getTableName() {
-        if ($this->table_name === null) {
-            $directory_class = implode('', array_slice(explode('\\', get_class($this)), -1));
-            $this->table_name = strtolower(substr($directory_class, 0, -9))."";
-        }
-
-        return $this->table_name;
     }
 
     protected function removeMysqlLiterals($array) {
