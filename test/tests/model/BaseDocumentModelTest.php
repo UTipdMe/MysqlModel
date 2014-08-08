@@ -82,7 +82,8 @@ class BaseDocumentModelTest extends \PHPUnit_Framework_TestCase
         PHPUnit::assertTrue($result === 1);
 
         $model = $directory->findById($model1['id']);
-        PHPUnit::assertEquals('child2', $model['docadded1']['p2']);
+        // we don't support deep updates
+        PHPUnit::assertArrayNotHasKey('p2', $model['docadded1']);
         PHPUnit::assertEquals('child3', $model['docadded1']['p1']);
     }
 
