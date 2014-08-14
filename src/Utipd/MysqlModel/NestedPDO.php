@@ -4,7 +4,6 @@ namespace Utipd\MysqlModel;
 
 use Exception;
 use PDO;
-use UTApp\Debug\Debug;
 
 
 /*

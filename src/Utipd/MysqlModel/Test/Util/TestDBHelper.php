@@ -4,7 +4,6 @@ namespace Utipd\MysqlModel\Test\Util;
 
 
 use Exception;
-use UTApp\Debug\Debug;
 
 /*
 * TestDBHelper
