@@ -154,6 +154,32 @@ class BaseMysqlDirectory
         return $this->find([]);
     }
 
+    /**
+     * queries the database for count
+     * @param  string $sql
+     * @param  array $vars the query to search for
+     * @return int a count
+     */
+    public function findCount($vars) {
+        $sql = $this->buildSelectStatement(array_keys($vars), $sort, $limit, $options);
+        $sth = $this->mysql_dbh->prepare($sql);
+        $result = $sth->execute(array_values($vars));
+        return $sth->rowCount();
+    }
+
+    /**
+     * queries the database for count
+     * @param  string $sql
+     * @param  array $vars the query to search for
+     * @return int a count
+     */
+    public function findCountRaw($sql, $vars) {
+        $sth = $this->mysql_dbh->prepare($sql);
+        $result = $sth->execute(array_values($vars));
+        return $sth->rowCount();
+    }
+
+
 
     /**
      * reloads the model from the database
