@@ -38,11 +38,8 @@ class DeadlockTest extends \PHPUnit_Framework_TestCase
             $sth = $db->prepare("UPDATE foo SET amount = 0 WHERE amount <> 0");
             PHPUnit::assertTrue($sth->execute());
 
-#            Debug::trace("child sleeping for 10 secs",__FILE__,__LINE__,$this);
             sleep(10);
-#            Debug::trace("child done",__FILE__,__LINE__,$this);
             $db->commit();
-#            Debug::trace("child exiting",__FILE__,__LINE__,$this);
         });
 
 
@@ -64,12 +61,10 @@ class DeadlockTest extends \PHPUnit_Framework_TestCase
             $sth = $db->prepare("SELECT * FROM foo where amount = 1");
             if (!$sth->execute()) {
                 $error_info = $sth->errorInfo();
-#                Debug::trace("\$error_info=",$error_info,__FILE__,__LINE__,$this);
             }
             $sth = $db->prepare("UPDATE foo SET amount = 2 WHERE amount <> 1");
             if (!$sth->execute()) {
                 $error_info = $sth->errorInfo();
-#                Debug::trace("\$error_info=",$error_info,__FILE__,__LINE__,$this);
             }
         });
 

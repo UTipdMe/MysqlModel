@@ -4,6 +4,8 @@ namespace Utipd\MysqlModel\Test\Util;
 
 
 use Exception;
+use Utipd\MysqlModel\ConnectionManager;
+use Utipd\MysqlModel\Test\Util\EchoLogger;
 
 /*
 * TestDBHelper
@@ -14,10 +16,16 @@ class TestDBHelper
     ////////////////////////////////////////////////////////////////////////
 
 
+    public static function getConnectionManager() {
+        $connection_string = self::buildMySQLConnectionString(self::getMySQLDBName());
+        $mysql_user = self::envVarOrDefault('MYSQL_USER', "root");
+        $mysql_password = self::envVarOrDefault('MYSQL_PASSWORD', "");
+        return new ConnectionManager($connection_string, $mysql_user, $mysql_password, null, new EchoLogger());
+    }
+
     public static function getMySQLDB() {
-        $connection_string = self::buildMySQLConnectionString();
-        $db = self::buildMySQLDB();
-        return self::buildPDO($connection_string.';dbname='.$db);
+        $connection_string = self::buildMySQLConnectionString(self::getMySQLDBName());
+        return self::buildPDO($connection_string);
     }
 
     public static function getMySQLClient() {
@@ -35,10 +43,10 @@ class TestDBHelper
         return $pdo;
     }
 
-    public static function buildMySQLConnectionString() {
-        return self::envVarOrDefault('MYSQL_CONNECTION_STRING', "mysql:host=localhost;port=3306");
+    public static function buildMySQLConnectionString($db=null) {
+        return self::envVarOrDefault('MYSQL_CONNECTION_STRING', "mysql:host=localhost;port=3306".($db === null ? '' : ';dbname='.$db));
     }
-    public static function buildMySQLDB() {
+    public static function getMySQLDBName() {
         return self::envVarOrDefault('MYSQL_DB', "mysqlmodel_test");
     }
 

@@ -14,13 +14,13 @@ class TransactionTest extends \PHPUnit_Framework_TestCase
 {
 
     public function testUpdateAccountTransactionRollback() {
-        $db = TestDBHelper::getMySQLDB();
-        $foo_directory = new FooDirectory($db);
+        $connection_manager = TestDBHelper::getConnectionManager();
+        $foo_directory = new FooDirectory($connection_manager);
         $foo1 = $foo_directory->createAndSave(['amount' => 1000]);
         $foo2 = $foo_directory->createAndSave(['amount' => 1000]);
 
         try {
-            $transaction = new MysqlTransaction($db);
+            $transaction = new MysqlTransaction($connection_manager);
             $transaction->doInTransaction(function() use ($foo1, $foo2, $foo_directory) {
                 $foo1 = $foo_directory->reload($foo1);
                 $foo_directory->update($foo1, ['amount' => 1200]);

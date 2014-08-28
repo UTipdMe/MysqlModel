@@ -13,37 +13,48 @@ class MysqlTransaction
 
     ////////////////////////////////////////////////////////////////////////
 
-    protected $mysql_dbh = null;
+    protected $connection_manager = null;
 
     protected $MAX_ATTEMPTS_ALLOWED = 10;
 
     ////////////////////////////////////////////////////////////////////////
 
-    public function __construct($mysql_dbh) {
-        $this->mysql_dbh = $mysql_dbh;
+    public function __construct($connection_manager) {
+        $this->connection_manager = $connection_manager;
     }
 
     public function doInTransaction($function) {
         $attempts = 0;
         while ($attempts++ < $this->MAX_ATTEMPTS_ALLOWED) {
-            $this->mysql_dbh->beginTransaction();
+            $pdo = $this->connection_manager->getConnection();
+            $pdo->beginTransaction();
 
             $deadlock_detected = false;
             try {
-                $result = $function($this->mysql_dbh);
-                $this->mysql_dbh->commit();
+                $result = $function($this->connection_manager);
+                $pdo->commit();
                 return $result;
 
             } catch(PDOException $e) {
                 if ($e->errorInfo[1] == 1213 OR $e->errorInfo[1] == 1205) {
                     $deadlock_detected = true;
                 }
+                if ($e->errorInfo[1] == 2006) {
+                    if ($pdo->getTransactionLevel() > 1) {
+                        // we can't handle an error in nested transaction
+                        throw $e;
+                    }
+
+                    // MySQL has gone away error
+                    $this->connection_manager->reconnect();
+                    continue;
+                } 
             } catch (Exception $e) {
                 // catch the deadlock so we can rollback
             }
 
             // always rollback
-            $this->mysql_dbh->rollback();
+            $pdo->rollback();
 
             if (!$deadlock_detected) {
                 throw $e;

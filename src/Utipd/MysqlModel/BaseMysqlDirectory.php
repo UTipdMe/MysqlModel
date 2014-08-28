@@ -5,6 +5,7 @@ namespace Utipd\MysqlModel;
 
 use Exception;
 use PDO;
+use PDOException;
 use Utipd\MysqlModel\BaseMysqlModel;
 use Utipd\MysqlModel\MysqlLiteral;
 
@@ -39,12 +40,12 @@ class BaseMysqlDirectory
     protected $model_class = null;
 
 
-    protected $mysql_dbh = null;
+    protected $connection_manager = null;
 
     ////////////////////////////////////////////////////////////////////////
 
-    public function __construct($mysql_dbh) {
-        $this->mysql_dbh = $mysql_dbh;
+    public function __construct($connection_manager) {
+        $this->connection_manager = $connection_manager;
     }
 
     /**
@@ -82,12 +83,14 @@ class BaseMysqlDirectory
      */
     public function save(BaseMysqlModel $model) {
         $create_vars = $this->onSave_pre((array)$model);
-
         $sql = $this->buildInsertStatement($create_vars);
-        $sth = $this->mysql_dbh->prepare($sql);
-        $result = $sth->execute(array_values($create_vars));
 
-        $id = $this->mysql_dbh->lastInsertId(); 
+        $id = $this->connection_manager->executeWithReconnect(function($mysql_dbh) use ($sql, $create_vars) {
+            $sth = $mysql_dbh->prepare($sql);
+            $result = $sth->execute(array_values($create_vars));
+            return $mysql_dbh->lastInsertId(); 
+        });
+
         $model['id'] = $id;
 
         return $model;
@@ -113,11 +116,7 @@ class BaseMysqlDirectory
      */
     public function find($vars, $sort=null, $limit=null, $options=null) {
         $sql = $this->buildSelectStatement(array_keys($vars), $sort, $limit, $options);
-        $sth = $this->mysql_dbh->prepare($sql);
-        $result = $sth->execute(array_values($vars));
-        while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
-            yield $this->newModelFromDatabase($row);
-        }
+        return $this->findRaw($sql, $vars);
     }
 
     /**
@@ -127,8 +126,12 @@ class BaseMysqlDirectory
      * @return Iterator a collection of BaseMysqlModels
      */
     public function findRaw($sql, $vars) {
-        $sth = $this->mysql_dbh->prepare($sql);
-        $result = $sth->execute(array_values($vars));
+        $sth = $this->connection_manager->executeWithReconnect(function($mysql_dbh) use ($sql, $vars) {
+            $sth = $mysql_dbh->prepare($sql);
+            $sth->execute(array_values($vars));
+            return $sth;
+        });
+
         while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
             yield $this->newModelFromDatabase($row);
         }
@@ -162,9 +165,7 @@ class BaseMysqlDirectory
      */
     public function findCount($vars) {
         $sql = $this->buildSelectStatement(array_keys($vars), $sort, $limit, $options);
-        $sth = $this->mysql_dbh->prepare($sql);
-        $result = $sth->execute(array_values($vars));
-        return $sth->rowCount();
+        return $this->findCountRaw($sql, $vars);
     }
 
     /**
@@ -174,8 +175,12 @@ class BaseMysqlDirectory
      * @return int a count
      */
     public function findCountRaw($sql, $vars) {
-        $sth = $this->mysql_dbh->prepare($sql);
-        $result = $sth->execute(array_values($vars));
+        $sth = $this->connection_manager->executeWithReconnect(function($mysql_dbh) use ($sql, $vars) {
+            $sth = $mysql_dbh->prepare($sql);
+            $sth->execute(array_values($vars));
+            return $sth;
+        });
+
         return $sth->rowCount();
     }
 
@@ -216,10 +221,14 @@ class BaseMysqlDirectory
 
         $sql = $this->buildUpdateStatement($update_vars, ['id']);
 
-        $sth = $this->mysql_dbh->prepare($sql);
-        $vars = $this->removeMysqlLiterals(array_values($update_vars));
-        $vars[] = $id;
-        $result = $sth->execute($vars);
+        $sth = $this->connection_manager->executeWithReconnect(function($mysql_dbh) use ($sql, $update_vars, $id) {
+            $sth = $mysql_dbh->prepare($sql);
+            $vars = $this->removeMysqlLiterals(array_values($update_vars));
+            $vars[] = $id;
+            $result = $sth->execute($vars);
+            return $sth;
+        });
+
         return $sth->rowCount();
     }
 
@@ -234,8 +243,12 @@ class BaseMysqlDirectory
     }
 
     public function deleteRaw($sql, $vars) {
-        $sth = $this->mysql_dbh->prepare($sql);
-        $result = $sth->execute($vars);
+        $result = $this->connection_manager->executeWithReconnect(function($mysql_dbh) use ($sql, $vars) {
+            $sth = $mysql_dbh->prepare($sql);
+            $result = $sth->execute($vars);
+            return $result;
+        });
+
         return $result;
     }
 
@@ -427,8 +440,6 @@ class BaseMysqlDirectory
         // modify update vars going to database
         return $update_vars;
     }
-    
-
 
 
 
@@ -436,6 +447,8 @@ class BaseMysqlDirectory
         // modify vars coming from the database
         return $model_vars;
     }
+
+
 
 }
 

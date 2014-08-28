@@ -45,5 +45,13 @@ class NestedPDO extends PDO {
         }
     }
 
+    public function isInTransaction() {
+        return ($this->transaction_level > 0);
+    }
+
+    public function getTransactionLevel() {
+        return $this->transaction_level;
+    }
+
 }
 

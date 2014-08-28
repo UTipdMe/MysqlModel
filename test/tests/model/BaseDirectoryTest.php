@@ -19,14 +19,14 @@ class BaseDirectoryTest extends \PHPUnit_Framework_TestCase
 {
 
     public function testCreateInMemory() {
-        $directory = new FooDirectory(TestDBHelper::getMySQLDB());
+        $directory = new FooDirectory(TestDBHelper::getConnectionManager());
         $model = $directory->create(['memoryOnly' => 'yes']);
         PHPUnit::assertObjectNotHasAttribute('id', $model);
         PHPUnit::assertEquals('yes', $model['memoryOnly']);
     }
 
     public function testCreateAndSave() {
-        $directory = new FooDirectory(TestDBHelper::getMySQLDB());
+        $directory = new FooDirectory(TestDBHelper::getConnectionManager());
         $model = $directory->create([]);
         $model['added1'] = 'yes';
         $model = $directory->save($model);
@@ -39,7 +39,7 @@ class BaseDirectoryTest extends \PHPUnit_Framework_TestCase
 
 
     public function testFindModel() {
-        $directory = new FooDirectory(TestDBHelper::getMySQLDB());
+        $directory = new FooDirectory(TestDBHelper::getConnectionManager());
         $model1 = $directory->createAndSave(['added1' => 'barz']);
         PHPUnit::assertTrue($model1 instanceof FooModel);
         
@@ -56,7 +56,7 @@ class BaseDirectoryTest extends \PHPUnit_Framework_TestCase
 
 
     public function testUpdate() {
-        $directory = new FooDirectory(TestDBHelper::getMySQLDB());
+        $directory = new FooDirectory(TestDBHelper::getConnectionManager());
         $model1 = $directory->createAndSave(['added1' => 'barz']);
         PHPUnit::assertTrue($model1 instanceof FooModel);
         
@@ -70,7 +70,7 @@ class BaseDirectoryTest extends \PHPUnit_Framework_TestCase
 
 
     public function testDelete() {
-        $directory = new FooDirectory(TestDBHelper::getMySQLDB());
+        $directory = new FooDirectory(TestDBHelper::getConnectionManager());
         $model1 = $directory->createAndSave(['added1' => 'barz']);
         
         $model = $directory->findById($model1['id']);
@@ -85,13 +85,13 @@ class BaseDirectoryTest extends \PHPUnit_Framework_TestCase
 
 
     public function testGetSpecialModels() {
-        $directory = new BarDirectory(TestDBHelper::getMySQLDB());
+        $directory = new BarDirectory(TestDBHelper::getConnectionManager());
         $model = $directory->create([]);
         PHPUnit::assertTrue($model instanceof BarModel);
         $model = $directory->create([]);
         PHPUnit::assertTrue($model instanceof BarModel);
 
-        $directory = new BazDirectory(TestDBHelper::getMySQLDB());
+        $directory = new BazDirectory(TestDBHelper::getConnectionManager());
         $model = $directory->create([]);
         PHPUnit::assertTrue($model instanceof SpecialBazModel);
         $model = $directory->create([]);

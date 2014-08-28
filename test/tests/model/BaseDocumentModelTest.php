@@ -16,7 +16,7 @@ class BaseDocumentModelTest extends \PHPUnit_Framework_TestCase
 
     public function testDocCreateAndSave() {
         $dbh = TestDBHelper::getMySQLDB();
-        $directory = new FoodocDirectory($dbh);
+        $directory = new FoodocDirectory(TestDBHelper::getConnectionManager());
         $model = $directory->create([]);
         $model['random_propery'] = 'yes';
         $model['withKey'] = 'bar1';
@@ -37,7 +37,7 @@ class BaseDocumentModelTest extends \PHPUnit_Framework_TestCase
 
 
     public function testDocFindModel() {
-        $directory = new FoodocDirectory(TestDBHelper::getMySQLDB());
+        $directory = new FoodocDirectory(TestDBHelper::getConnectionManager());
         $model1 = $directory->createAndSave(['docadded1' => 'barz']);
         PHPUnit::assertTrue($model1 instanceof FoodocModel);
         
@@ -52,7 +52,7 @@ class BaseDocumentModelTest extends \PHPUnit_Framework_TestCase
 
     public function testDocUpdate() {
         $dbh = TestDBHelper::getMySQLDB();
-        $directory = new FoodocDirectory($dbh);
+        $directory = new FoodocDirectory(TestDBHelper::getConnectionManager());
         $model1 = $directory->createAndSave(['docadded1' => 'barz']);
         PHPUnit::assertTrue($model1 instanceof FoodocModel);
         
@@ -73,7 +73,7 @@ class BaseDocumentModelTest extends \PHPUnit_Framework_TestCase
     }
 
     public function testDocAdvancedUpdate() {
-        $directory = new FoodocDirectory(TestDBHelper::getMySQLDB());
+        $directory = new FoodocDirectory(TestDBHelper::getConnectionManager());
         $model1 = $directory->createAndSave(['docadded1' => ['p1' => 'child1', 'p2' => 'child2']]);
         PHPUnit::assertTrue($model1 instanceof FoodocModel);
         
@@ -89,7 +89,7 @@ class BaseDocumentModelTest extends \PHPUnit_Framework_TestCase
 
 
     public function testDocDelete() {
-        $directory = new FoodocDirectory(TestDBHelper::getMySQLDB());
+        $directory = new FoodocDirectory(TestDBHelper::getConnectionManager());
         $model1 = $directory->createAndSave(['docadded1' => 'barz']);
         
         $model = $directory->findById($model1['id']);
